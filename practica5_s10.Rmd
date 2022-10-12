@@ -715,8 +715,126 @@ En primer lugar debemos importar el archivo de datos salario.xls
 Para ello, seleccionamos en el menú principal: Datos/Importar datos/desde un archivo de Excel.
 
 ```{r}
-salario <- read.table("C:/Users/Usuario/Desktop/respaldo/Desktop/PAQUETE R/PRACTICAS_S10/salario.xlsx", header=TRUE, stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+library(Rcmdr)
+```
+
+```{r}
+salario <- readXL("C:/Users/Usuario/Desktop/respaldo/Desktop/PAQUETE R/PRACTICAS_S10/salario.xlsx", rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
+```
+
+a) Obtener un intervalo de confianza a un nivel del 89% para el salario medio entre ambas ciudades
+
+En este caso nos encontramos ante un intervalo de confianza sobre la media de una población normal con varianza desconocida. Para resolverlo, seleccionamos Estadísticos/Medias/Test t para una muestra
+
+## Ejercicio Propuesto 2
+
+Para comprobar si un determinado fertilizante puede mejorar la producción de manzanas, se selecciona una muestra aleatoria simple de 10 árboles. En la tabla siguiente se muestra el peso (en Kgr) de manzanas por árbol recogidas antes y después del tratamiento
+
+Obtener un intervalo de confianza al 98% para la diferencia de los pesos medios producida antes y después del tratamiento.
+
+\textbf{Solución:}
+
+En primer lugar se importa el archivo de datos manzanas.xls,
+
+El  intervalo de confianza al 98% para la diferencia de los pesos medios producida antes y después del tratamiento
+
+```{r}
+manzanas <- readXL("C:/Users/Usuario/Downloads/manzanas.xlsx", rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
 ```
 
 
-a) Obtener un intervalo de confianza a un nivel del 89% para el salario medio entre ambas ciudades
+```{r}
+with(manzanas, (t.test(Antes, Después, alternative='two.sided', conf.level=.98, paired=TRUE)))
+```
+En la segunda parte de los resultados se incluye el intervalo de confianzaal 98% para la diferencia de las medias los pesos, que es (-1.0006005, 0.1406005). Este intervalo incluye el valor 0, lo que significa que el 0 es un valor posible para la diferencia entre las medias. Por ello, concluimos que puede asumirse que la diferencia entre dichas medias es 0, o dicho de otro modo, que ambos pesos son iguales.
+
+
+## Ejercicio Propuesto 3
+En una muestra aleatoria de 150 personas con pelo oscuro se encontró que 90 de ellas tenían los ojos azules. Construir un intervalo de confianza al 95% para la proporción de individuos que teniendo pelo oscuro en la población posee ojos azules. ¿Son compatibles estos resultados con la suposición de que dicha proporción vale 2/3).
+
+\textbf{Solución:}
+
+En primer lugar debemos importar el archivo de datos propuesto3.xls
+
+```{r}
+p3 <- readXL("C:/Users/Usuario/Downloads/propuesto3-1.xlsx", rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
+```
+
+Recodificacion de la variable
+
+```{r}
+p3 <- within(p3, {
+  azules_rec <- Recode(Azules, '"Si"="1Si"; "No"="2No"', as.factor=TRUE, to.value="=", interval=":", separator=";")
+})
+```
+
+Dado que la hipótesis que se ha planteado se ha hecho sobre tener los ojos azules es necesario hacer una recodificación de la variable. Para ello seleccionamos Datos/Modificar variables del conjunto de datos activo/Recodificar variables
+
+```{r}
+local({
+  .Table <- xtabs(~ azules_rec , data= p3 )
+  cat("\nFrequency counts (test is for first level):\n")
+  print(.Table)
+  prop.test(rbind(.Table), alternative='two.sided', p=.5, conf.level=.95, correct=FALSE)
+})
+```
+
+El intervalo de confianza para la proporción de individuos que teniendo pelo oscuro en la población posee ojos azules, a un nivel del 95%, es (0.3250432, 0.4799508). Este resultado si es compatible con la suposición de que dicha proporción vale 2/3, ya que 2/3 no pertenece al intervalo.
+
+## Ejercicio Propuesto 4
+
+En una piscifactoría se desea comparar el porcentaje de peces adultos que miden menos de 20 cm con los que miden más de 40 cm. Para ello, se toma una muestra de 200 peces observando que 40 de ellos miden menos de 20 cm y una muestra de 200 peces de los que 57 miden más de 40 cm. Halla un intervalo de confianza para:
+
+a) La diferencia de proporciones de peces adultos que miden más de 40 cm con los que miden menos de 20 cm al nivel de confianza del 0.95
+
+b) La diferencia de proporciones de peces adultos que miden menos de 20 cm con los que miden más de 40 cm al nivel de confianza del 0.95
+ 
+
+\textbf{Solución:}
+
+En primer lugar debemos importar el archivo de datos propuesto4.xls
+
+```{r}
+p4 <- readXL("C:/Users/Usuario/Downloads/propuesto4-1.xlsx", rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
+```
+
+a) La diferencia de proporciones de peces adultos que miden más de 40 cm con los que miden menos de 20 cm al nivel de confianza del 0.95
+
+recodificacion de la variable
+```{r}
+p4 <- within(p4, {
+  resultados_rec <- Recode(resultado, '"Si"="1Si"; "No"="2No"', as.factor=TRUE, to.value="=", interval=":", separator=";")
+})
+```
+
+Nos piden un intervalo de confianza para la diferencia de  proporciones de peces adultos que miden más de 40 cm con los que miden menos de 20 cm. Seleccionamos: Estadísticos/Proporciones/Test de proporciones para dos muestras. 
+
+```{r}
+library(abind, pos=17)
+local({  .Table <- xtabs(~medida+resultados_rec, data=p4)
+  cat("\nPercentage table:\n")
+  print(rowPercents(.Table))
+  prop.test(.Table, alternative='two.sided', conf.level=.95, correct=FALSE)
+})
+```
+El intervalo pedido es: (-0.168589075, -0.001410925)
+
+b) La diferencia de proporciones de peces adultos que miden menos de 20 cm con los que miden más de 40 cm al nivel de confianza del 0.95
+
+El intervalo pedido es de peces adultos que miden menos de 20 cm con los que miden más de 40 cm. Tenemos que recodificar la variable medida. Para ello, en la ventana de Recodificar Variables
+
+```{r}
+p4 <- within(p4, {
+  medida_rec <- Recode(medida, '"menosde20"="1menosde20"; "masde40"="2masde40";', as.factor=TRUE, to.value="=", interval=":", separator=";")
+})
+```
+
+```{r}
+local({  .Table <- xtabs(~medida_rec+resultados_rec, data=p4)
+  cat("\nPercentage table:\n")
+  print(rowPercents(.Table))
+  prop.test(.Table, alternative='two.sided', conf.level=.95, correct=FALSE)
+})
+```
+
+ntervalo de confianza para la diferencia de proporciones entre los peces adultos que miden menos de 20 cm y los que miden más de 40 cm al 95%  (0.001410925, 0.168589075).
